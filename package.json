@@ -1,0 +1,8 @@
+{
+  "name": "playwright-xserver-login",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.44.1"
+  }
+}
