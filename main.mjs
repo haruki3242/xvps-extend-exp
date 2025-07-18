@@ -1,29 +1,61 @@
 import { chromium } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+import fetch from 'node-fetch';
 
-const browser = await chromium.launch({ headless: true });
+(async () => {
+  const browser = await chromium.launch({ headless: true });
 
-const context = await browser.newContext({
-  recordVideo: { dir: 'videos/' }
-});
+  const context = await browser.newContext({
+    viewport: { width: 1080, height: 1024 },
+    recordVideo: { dir: 'videos/' }
+  });
 
-const page = await context.newPage();
-await page.goto('https://secure.xserver.ne.jp/xapanel/login/xvps/');
+  const page = await context.newPage();
 
-const loginId = process.env.XSERVER_ID;
-const password = process.env.XSERVER_PASSWORD;
+  // プロキシ認証（必要なら）
+  if (process.env.PROXY_SERVER) {
+    const proxyUrl = new URL(process.env.PROXY_SERVER);
+    if (proxyUrl.username && proxyUrl.password) {
+      await context.setHTTPCredentials({
+        username: proxyUrl.username,
+        password: proxyUrl.password,
+      });
+    }
+  }
 
-await page.fill('#xid', loginId);
-await page.fill('#passwd', password);
-await Promise.all([
-  page.waitForNavigation({ waitUntil: 'networkidle' }),
-  page.click('button[type="submit"]'),
-]);
+  try {
+    await page.goto('https://secure.xserver.ne.jp/xapanel/login/xvps/', { waitUntil: 'networkidle' });
 
-console.log('Login attempted.');
+    await page.fill('#memberid', process.env.EMAIL);
+    await page.fill('#user_password', process.env.PASSWORD);
+    await page.click('text=ログインする');
 
-await page.waitForTimeout(2000); // ログイン後の画面安定待ち
+    await page.waitForNavigation({ waitUntil: 'networkidle' });
 
-await context.close(); // ← 録画ファイルが保存されるのは close 時
-await browser.close();
+    await page.click('a[href^="/xapanel/xvps/server/detail?id="]');
+    await page.click('text=更新する');
+    await page.click('text=引き続き無料VPSの利用を継続する');
+
+    await page.waitForNavigation({ waitUntil: 'networkidle' });
+
+    // キャプチャ画像取得
+    const imgSrc = await page.$eval('img[src^="data:"]', el => el.src);
+    const base64Data = imgSrc.split(',')[1];
+
+    const response = await fetch('https://captcha-120546510085.asia-northeast1.run.app', {
+      method: 'POST',
+      body: base64Data,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    const code = await response.text();
+
+    await page.fill('[placeholder="上の画像の数字を入力"]', code);
+    await page.click('text=無料VPSの利用を継続する');
+
+  } catch (e) {
+    console.error(e);
+  } finally {
+    await page.waitForTimeout(5000);
+    await context.close();
+    await browser.close();
+  }
+})();
