@@ -1,8 +1,9 @@
 {
-  "name": "playwright-xserver-login",
+  "name": "xserver-auto-renew",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "playwright": "^1.44.1"
+    "playwright": "^1.44.1",
+    "node-fetch": "^3.3.2"
   }
 }
