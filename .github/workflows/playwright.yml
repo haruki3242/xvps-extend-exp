@@ -1,10 +1,10 @@
-name: Login to Xserver with Video
+name: Xserver VPS Auto Renew with Video
 
 on:
   workflow_dispatch:
 
 jobs:
-  login-video:
+  auto-renew:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,21 +22,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Run login script
+      - name: Run auto-renew script
         env:
-          XSERVER_ID: ${{ secrets.XSERVER_ID }}
-          XSERVER_PASSWORD: ${{ secrets.XSERVER_PASSWORD }}
+          EMAIL: ${{ secrets.XSERVER_ID }}
+          PASSWORD: ${{ secrets.XSERVER_PASSWORD }}
+          PROXY_SERVER: ${{ secrets.PROXY_SERVER }}  # 必要なら設定
         run: node main.mjs
 
-      - name: Convert video to mp4
+      - name: Convert recorded video to mp4
         run: |
           mkdir -p mp4
           webm=$(find videos -name '*.webm' | head -n 1)
           ffmpeg -i "$webm" -c:v libx264 -preset veryfast -pix_fmt yuv420p mp4/output.mp4
 
-      - name: Upload video
+      - name: Upload video artifact
         uses: actions/upload-artifact@v4
         with:
-          name: login-video
+          name: renewal-video
           path: mp4/output.mp4
-
