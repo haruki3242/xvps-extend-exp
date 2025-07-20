@@ -1,9 +1,16 @@
 {
-  "name": "xserver-auto-renew",
+  "name": "xserver-vps-auto",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "start": "node main.mjs"
+  },
   "dependencies": {
-    "playwright": "^1.44.1",
-    "node-fetch": "^3.3.2"
+    "puppeteer": "^22.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "ffmpeg-static": "^5.1.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "node-fetch": "^3.4.1"
   }
 }
